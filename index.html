@@ -1,0 +1,422 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+<meta http-equiv="Content-type" content="text/html; charset=utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+<link rel="stylesheet" href="http://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css">
+<link rel="stylesheet" type="text/css" href="geostyle.css">
+<script src="https://maps.googleapis.com/maps/api/js?key=_GOOGLE_API_KEY_HERE_"> </script>    
+
+<title>
+Geolocation App
+</title>
+
+<script>
+var dropBox;
+//var lat1;
+//var lon1;
+var lat2;
+var lon2;
+    
+var lats = [];
+var lats2 = [];
+var lons = [];
+var lons2 = [];
+var streetnames = [];
+var countries = [];
+var cities = [];
+var distances = [];
+
+function initMap() {
+  var myLatLng = {};
+  myLatLng.lat = lat2;
+  myLatLng.lng = lon2;
+
+  var map = new google.maps.Map(document.getElementById('map'), {
+    zoom: 14,
+    center: myLatLng
+  });
+
+  var marker = new google.maps.Marker({
+    position: myLatLng,
+    map: map,
+    title: 'Current Location'
+  });
+}
+
+
+function getLocation() {
+    var x = document.getElementById("test");
+    if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(showPosition, showError);
+    } else {
+        x.innerHTML = "Geolocation is not supported by this browser.";
+    }
+}
+
+function showPosition(position) {
+    var latlon = position.coords.latitude + "," + position.coords.longitude;
+    lat2 = position.coords.latitude;
+    lon2 = position.coords.longitude;
+    //document.getElementById("coordinates").innerHTML = "Latitude: " + lat2 + "<br> Longitude: " + lon2; 
+    //var img_url = "http://maps.googleapis.com/maps/api/staticmap?center="+latlon+"&zoom=14&size=400x300&sensor=false";
+    //document.getElementById("mapholder").innerHTML = "<img src='"+img_url+"'>";
+    mySearch2(lat2,lon2);
+    initMap();
+}
+
+function showError(error) {
+    var x = document.getElementById("test");
+    switch(error.code) {
+        case error.PERMISSION_DENIED:
+            x.innerHTML = "User denied the request for Geolocation."
+            break;
+        case error.POSITION_UNAVAILABLE:
+            x.innerHTML = "Location information is unavailable."
+            break;
+        case error.TIMEOUT:
+            x.innerHTML = "The request to get user location timed out."
+            break;
+        case error.UNKNOWN_ERROR:
+            x.innerHTML = "An unknown error occurred."
+            break;
+    }
+}
+
+function mySearch2(lati,longi) {
+  var lat = lati;
+  var lon = longi;
+  var xhttp;
+  if (window.XMLHttpRequest) {
+    // code for modern browsers
+    xhttp = new XMLHttpRequest();
+    } else {
+    // code for IE6, IE5
+    xhttp = new ActiveXObject("Microsoft.XMLHTTP");
+  }
+  xhttp.onreadystatechange = function() {
+    if (xhttp.readyState == 4 && xhttp.status == 200) {
+       displayFunc2(xhttp);
+    }
+  };
+  xhttp.open("GET", "http://nominatim.openstreetmap.org/reverse?format=xml&lat="+lat+"&lon="+lon+"&zoom=18&addressdetails=1" , true);
+  xhttp.send();
+}
+
+function displayFunc2(xml){
+   var xmlDoc = xml.responseXML;
+   var strNum = xmlDoc.getElementsByTagName("house_number");
+   var strRoad = xmlDoc.getElementsByTagName("road");
+   var street = xmlDoc.getElementsByTagName("pedestrian");
+   var strtxt;
+    if (strNum[0] === undefined && strRoad[0] === undefined) {
+        strtxt = street[0].childNodes[0].nodeValue;
+    } else if (street[0] === undefined && strNum[0] === undefined) {
+        strtxt = strRoad[0].childNodes[0].nodeValue;
+    } else {
+       strtxt = strNum[0].childNodes[0].nodeValue + " " + strRoad[0].childNodes[0].nodeValue;
+   }
+   //document.getElementById("street2").innerHTML = strtxt; 
+
+   var city = xmlDoc.getElementsByTagName("city");
+   citytxt = city[0].childNodes[0].nodeValue;
+   //document.getElementById("city2").innerHTML = citytxt;
+
+   var country = xmlDoc.getElementsByTagName("country");
+   countrytxt = country[0].childNodes[0].nodeValue;
+   //document.getElementById("country2").innerHTML = countrytxt;
+    
+   var table;
+   //table = "<tr> <th>Coordinates</th> <th>Street Name</th> <th>City</th> <th>Country</th> </tr>";
+   //table += "<tr><td> Latitude: " + lat2 + "<br> Longitude: " + lon2 +  "</td><td>" + strtxt + "</td><td>" + citytxt + "</td><td>" + countrytxt + "</td></tr>";
+   table = "<thead> <tr> <th>Coordinates</th> <th>Street Name</th> <th>City</th> <th>Country</th> </tr> </thead>";
+   table += "<tbody> <tr> <td> Latitude: " + lat2 + "<br> Longitude: " + lon2 +  "</td><td>" + strtxt + "</td><td>" + citytxt + "</td><td>" + countrytxt + "</td></tr> </tbody>";
+   document.getElementById("tabledata2").innerHTML = table; 
+}
+
+getLocation();
+    
+var w;
+var msg = {};
+//var count = 1;
+//var dtn;
+function startWorker(latx, lonx) {
+    if(typeof(Worker) !== "undefined") {
+        if(typeof(w) == "undefined") {
+            w = new Worker("worker.js");
+            msg.lat1 = latx;
+            msg.lon1 = lonx;
+            msg.lat2 = lat2;
+            msg.lon2 = lon2;
+            w.postMessage(msg);
+        }
+        w.onmessage = function(event) {
+            distances.push(event.data);
+            var x = document.getElementById('tabledata').rows;
+            var y;
+            for(var w = 0; w < distances.length; w++){
+                y = x[w+1].cells;
+                y[5].innerHTML = distances[w] + " kilometres";
+            }
+            //dtn = event.data;
+            //var x = document.getElementById('tabledata').rows;
+            //var y = x[count].cells;
+            //y[5].innerHTML=dtn + " kilometres";
+            //count = count+1;
+            //document.getElementById("result").innerHTML = distances;  
+            //document.getElementById("result").innerHTML = event.data;
+        };
+    } else {
+        document.getElementById("warning").innerHTML = "Sorry, your browser does not support Web Workers...";
+    }
+}  
+    
+window.onload = function() {
+  dropBox = document.getElementById("dropBox");
+  dropBox.ondragenter = ignoreDrag;
+  dropBox.ondragover = ignoreDrag;
+  dropBox.ondrop = drop;
+}
+
+function ignoreDrag(e) {
+  e.stopPropagation();
+  e.preventDefault();
+}
+
+function drop(e) {
+  e.stopPropagation();
+  e.preventDefault();
+  var data = e.dataTransfer;
+  var files = data.files;
+  processFiles(files);
+}
+
+function processFiles(files) {
+  var file = files[0];
+  var reader = new FileReader();
+  reader.onload = function(e){
+//    lat1 = reader.result.substring(0, 11);
+//    lon1 = reader.result.substring(12,24);
+//    here.innerHTML = "Latitude: " +lat1 + "<br> Longitude: " + lon1; 
+      reset();
+      var lines = this.result.split('\n');
+      for(var i = 0; i < lines.length; i++){
+          //lats[i] = lines[i].substring(0,11);
+          //lons[i] = lines[i].substring(12,24);
+          var pos = lines[i].search(",");
+          var len = lines[i].length;
+          lats[i] = lines[i].substring(0,pos);
+          lons[i] = lines[i].substring(pos+1, len);
+      }
+      //here.innerHTML = "Latitudes: " + lats + "<br> Longitudes: " + lons;
+      here.innerHTML = "Drop Sucessful! <br> You can Drop files here again!";
+      
+      //mySearch1(lat1,lon1);
+      //startWorker();
+      for (var x = 0; x < lats.length; x++){
+          mySearch1(lats[x],lons[x]);
+      } 
+     
+      //document.getElementById("result").innerHTML = distances;
+  };
+  reader.readAsText(file);
+}
+
+function mySearch1(lati,longi) {
+  var lat = lati;
+  var lon = longi;
+  var xhttp;
+  if (window.XMLHttpRequest) {
+    // code for modern browsers
+    xhttp = new XMLHttpRequest();
+    } else {
+    // code for IE6, IE5
+    xhttp = new ActiveXObject("Microsoft.XMLHTTP");
+  }
+  xhttp.onreadystatechange = function() {
+    if (xhttp.readyState == 4 && xhttp.status == 200) {
+       startWorker(lat,lon);
+        w = undefined;
+        //window.alert(lat + " " + lon);
+       displayFunc1(xhttp);
+       display(lat,lon);
+    }
+  };
+  xhttp.open("GET", "http://nominatim.openstreetmap.org/reverse?format=xml&lat="+lat+"&lon="+lon+"&zoom=18&addressdetails=1" , true);
+  xhttp.send();
+}
+
+function displayFunc1(xml){
+   var xmlDoc = xml.responseXML;
+   var strNum = xmlDoc.getElementsByTagName("house_number");
+   var strRoad = xmlDoc.getElementsByTagName("road");
+   var street = xmlDoc.getElementsByTagName("pedestrian");
+   var strtxt;
+    if (strNum[0] === undefined && strRoad[0] === undefined) { //no house num and road
+        strtxt = street[0].childNodes[0].nodeValue;
+    } else if (street[0] === undefined && strNum[0] === undefined) { //no house num and pedestrian
+        strtxt = strRoad[0].childNodes[0].nodeValue;
+    } else if (strRoad[0] === undefined) { //no road 
+        strtxt = strNum[0].childNodes[0].nodeValue + " " + street[0].childNodes[0].nodeValue;
+    } else { //no pedestian
+       strtxt = strNum[0].childNodes[0].nodeValue + " " + strRoad[0].childNodes[0].nodeValue;
+   }  
+   //document.getElementById("street1").innerHTML = strtxt; 
+   streetnames.push(strtxt);
+   //document.getElementById("street1").innerHTML = streetnames;
+
+   var city = xmlDoc.getElementsByTagName("city");
+   citytxt = city[0].childNodes[0].nodeValue;
+   //document.getElementById("city1").innerHTML = citytxt;
+   cities.push(citytxt);
+   //document.getElementById("city1").innerHTML = cities;
+    
+   var country = xmlDoc.getElementsByTagName("country");
+   countrytxt = country[0].childNodes[0].nodeValue;
+   //document.getElementById("country1").innerHTML = countrytxt;
+   countries.push(countrytxt);
+   //document.getElementById("country1").innerHTML = countries;
+   //display();
+}
+
+function display(latd, lond){
+    //document.getElementById("testing").innerHTML = distances + "<br>" + lats + "<br>" + lons + "<br>" + streetnames + "<br>" + countries + "<br>" + cities;
+    var table;
+    //table = "<tr><th>Locations</th> <th>Coordinates</th> <th>Street Name</th> <th>City</th> <th>Country</th> <th>Distance to Current Location</th> </tr>";
+    table = "<thead> <tr> <th>Locations</th> <th>Coordinates</th> <th>Street Name</th> <th>City</th> <th>Country</th> <th>Distance to Current Location</th> </tr> </thead> <tbody>";
+    
+    lats2.push(latd);
+    lons2.push(lond);
+    for (var i = 0; i < lats.length; i++){
+            //table += "<tr><td>" + (i+1) + "</td><td> Latitude: " + lats[i] + "<br> Longitude: " + lons[i] +  "</td><td>" + streetnames[i] + "</td><td>" + cities[i] + "</td><td>" + countries[i] + "</td><td>" + distances[i] + " kilometres </td></tr>";
+        //table += "<tr><td>" + (i+1) + "</td><td> Latitude: " + lats[i] + "<br> Longitude: " + lons[i] +  "</td><td>" + streetnames[i] + "</td><td>" + cities[i] + "</td><td>" + countries[i] + "</td><td>" + distances[i] + " kilometres </td></tr>";
+        table += "<tr><td>" + (i+1) + "</td><td> Latitude: " + lats2[i] + "<br> Longitude: " + lons2[i] +  "</td><td>" + streetnames[i] + "</td><td>" + cities[i] + "</td><td>" + countries[i] + "</td><td>" + distances[i] + " kilometres </td></tr>";
+    }    
+    table += "</tbody>";
+    document.getElementById("tabledata").innerHTML = table;
+}
+    
+function reset(){
+    lats.splice(0);
+    lons.splice(0);
+    lats2.splice(0);
+    lons2.splice(0);
+    streetnames.splice(0);
+    countries.splice(0);
+    cities.splice(0);
+    distances.splice(0);
+    document.getElementById("tabledata").innerHTML = "<thead> <tr> <th>Locations</th> <th>Coordinates</th> <th>Street Name</th> <th>City</th> <th>Country</th> <th>Distance to Current Location</th> </tr> </thead> <tbody>";
+}
+
+</script>
+</head>
+
+<body>
+<div class="container">
+    
+<section>
+<div class="container">
+<h1> Current Location </h1>
+<div id="warning"></div>
+<!--<div id="coordinates"> </div>-->
+<div class="table-responsive"> 
+<table id="tabledata2" class="table table-striped">
+<thead>
+      <tr>
+        <th>Coordinates</th>
+        <th>Street Name</th>
+        <th>City</th>
+        <th>Country</th>
+      </tr>
+</thead>
+</table>
+</div>
+<!--<table id="tabledata2" border="1"> 
+    <tr>
+        <th>Coordinates</th>
+        <th>Street Name</th>
+        <th>City</th>
+        <th>Country</th>
+    </tr>
+</table>-->
+<p id="test"></p>
+<!--<div id="mapholder"></div>-->
+<div id="map"></div> 
+    
+</div>
+</section>
+    
+<br>
+<section>
+<div class="container">
+<!--<h1> Location 1 </h1>-->
+<!--<table id="tabledata" border="1"> 
+    <tr><th>Location</th>
+        <th>Coordinates</th>
+        <th>Street Name</th>
+        <th>City</th>
+        <th>Country</th>
+        <th>Distance to Current Location</th>
+    </tr>
+</table>-->
+<div class="table-responsive"> 
+<table id="tabledata" class="table table-striped">
+<thead>
+      <tr>
+        <th>Location</th>
+        <th>Coordinates</th>
+        <th>Street Name</th>
+        <th>City</th>
+        <th>Country</th>
+        <th>Distance to Current Location</th>
+      </tr>
+</thead>
+</table>
+</div>
+</div>
+</section>
+
+<section>
+<div class="container">
+<div id="dropBox">
+<div id="here"> Drop your text file here...</div>
+</div>
+</div>
+</section>
+<br>
+<br>
+<br>
+<br> 
+
+<!--<br>
+<section>-->
+<!--<h2> Street Name: </h2>
+<p id="street1"> </p>
+
+<h2> City: </h2>
+<p id="city1"> </p>
+
+<h2> Country: </h2>
+<p id="country1"> </p>-->
+<!--</section>-->
+
+<!--<section>
+<h2> Street Name: </h2>
+<p id="street2"> </p>
+    
+<h2> City: </h2>
+<p id="city2"> </p>
+
+<h2> Country: </h2>
+<p id="country2"> </p>
+</section>-->
+
+<!--<br>
+<section>
+<p> The distance between the two locations is: <div id="result"> </div> kilometres.</p>
+</section>-->
+
+</div>
+</body>
+</html>

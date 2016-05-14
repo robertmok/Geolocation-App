@@ -1,0 +1,30 @@
+#map {
+  min-width: 200px;
+  width: 100%;
+  min-height: 400px;
+  height: 100%;
+  border: 1px solid blue;
+}
+
+
+#dropBox{ 
+    max-width: 400px;
+    width:auto;
+    min-height: 70px;
+    height:auto;
+    padding:10px;
+    margin:auto;
+    font-weight: bold;
+    text-align: center;
+    vertical-align: middle;
+
+    border-radius: 25px;
+    border-width: 5px;
+    border-style: dashed;
+    border-color: green;
+    background-color: lightgreen;
+}
+    
+td{
+    background: lightblue;
+}
