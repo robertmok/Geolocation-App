@@ -5,3 +5,8 @@ This is a web application that takes in a list of geolocation coordinates (latit
 The user can drag and drop a text file containing a list of coordinates to calculate the distance (locations.txt). The calculation uses the haversine formula and it is done via a web worker.
 
 The calculated distances is displayed in a table along with the geocoding of the coordinates (street name, city and country) using Nominatim.
+
+This application is responsive (using Bootstrap) and asynchronous (using AJAX).
+
+
+**Note:** The Google API Key is removed from the code.  
