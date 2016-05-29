@@ -7,6 +7,11 @@ The user can drag and drop a text file containing a list of coordinates to calcu
 The calculated distances is displayed in a table along with the geocoding of the coordinates (street name, city and country) using Nominatim.
 
 This application is responsive (using Bootstrap) and asynchronous (using AJAX).
+Other technologies used in this application includes:
+- XML
+- Drag and Drop
+- FileReader
+- Web Worker (used to calculate the distance between coordinates)
 
 
 **Note:** The Google API Key is removed from the code.  
